@@ -4,17 +4,16 @@ namespace Nexus.Client.Updating
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.IO;
-    using System.Linq;
     using System.Net;
     using System.Text;
     using System.Text.RegularExpressions;
     using System.Threading;
     using System.Windows.Forms;
-
+    using System.Linq;
     using Newtonsoft.Json.Linq;
 
-    using Nexus.Client.ModRepositories;
-    using Nexus.Client.Util;
+    using ModRepositories;
+    using Util;
     using Nexus.UI.Controls;
 
     /// <summary>

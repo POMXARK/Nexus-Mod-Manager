@@ -10,8 +10,6 @@ using Nexus.Client.BackgroundTasks;
 using Nexus.Client.Games;
 using Nexus.Client.Mods;
 using Nexus.Client.Util;
-using Nexus.Client.UI;
-using SevenZip;
 
 namespace Nexus.Client.ModAuthoring
 {
@@ -131,13 +129,7 @@ namespace Nexus.Client.ModAuthoring
 			Sources srcModSource = Sources.Archive;
 			if (String.IsNullOrEmpty(p_strFilePath) || !File.Exists(p_strFilePath))
 				throw new ArgumentException("The given file path does not exist: " + p_strFilePath);
-			if (!Archive.IsArchive(p_strFilePath))
-			{
-				Status = TaskStatus.Error;
-				OnTaskEnded(String.Format("Cannot add {0}. File format is not recognized.", Path.GetFileName(p_strFilePath)), null);
-				return;
-			}
-
+			
 			Start(srcModSource, p_mfrFormats, p_strFilePath, p_dlgConfirmOverwrite);
 		}
 
@@ -161,7 +153,7 @@ namespace Nexus.Client.ModAuthoring
 		{
 			p_strMessage = null;
 			Trace.TraceInformation(String.Format("[{0}] Adding mod from archive.", p_strArchivePath));
-			if (String.IsNullOrEmpty(p_strArchivePath) || !File.Exists(p_strArchivePath) || !Archive.IsArchive(p_strArchivePath))
+			if (String.IsNullOrEmpty(p_strArchivePath) || !File.Exists(p_strArchivePath))
 				throw new ArgumentException("The specified path is not an archive file.", "p_strArchivePath");
 
 			List<string> lstFoundMods = new List<string>();
@@ -174,22 +166,6 @@ namespace Nexus.Client.ModAuthoring
 
 			try
 			{
-				using (SevenZipExtractor szeExtractor = Archive.GetExtractor(p_strArchivePath))
-				{
-					if (Status == TaskStatus.Cancelling)
-						return lstFoundMods;
-					ReadOnlyCollection<string> lstArchiveFiles = szeExtractor.ArchiveFileNames;
-					foreach (IModFormat mftFormat in p_mfrFormats.Formats)
-					{
-						ItemMessage = String.Format("Examining archive for {0} mods...", mftFormat.Name);
-						lstModsInArchive.AddRange(lstArchiveFiles.Where(x => mftFormat.Extension.Equals(Path.GetExtension(x), StringComparison.OrdinalIgnoreCase)));
-						StepItemProgress();
-						if (Status == TaskStatus.Cancelling)
-							return lstFoundMods;
-					}
-					StepOverallProgress();
-				}
-
 				if (lstModsInArchive.Count == 0)
 				{
 					ItemMessage = "Determining archive format...";
@@ -218,33 +194,6 @@ namespace Nexus.Client.ModAuthoring
 			string strTmpPath = null;
 			try
 			{
-				using (SevenZipExtractor szeExtractor = Archive.GetExtractor(p_strArchivePath))
-				{
-					if ((mftDestFormat != null) && (szeExtractor.VolumeFileNames.Count > 1) ||
-						(lstModsInArchive.Count > 0))
-					{
-						ItemMessage = "Extracting archive...";
-						ItemProgress = 0;
-						ItemProgressMaximum = szeExtractor.ArchiveFileNames.Count;
-						strTmpPath = FileUtility.CreateTempDirectory();
-						szeExtractor.FileExtractionStarted += new EventHandler<FileInfoEventArgs>(Extractor_FileExtractionStarted);
-						szeExtractor.FileExtractionFinished += new EventHandler<FileInfoEventArgs>(Extractor_FileExtractionFinished);
-						try
-						{
-							szeExtractor.ExtractArchive(strTmpPath);
-						}
-						catch (FileNotFoundException ex)
-						{
-							Status = TaskStatus.Error;
-							p_strMessage = ex.Message;
-							return lstFoundMods;
-						}
-						for (Int32 i = 0; i < lstModsInArchive.Count; i++)
-							lstModsInArchive[i] = Path.Combine(strTmpPath, lstModsInArchive[i]);
-					}
-					else
-						lstModsInArchive.Add(p_strArchivePath);
-				}
 				StepOverallProgress();
 
 				if (!String.IsNullOrEmpty(strTmpPath) && (mftDestFormat != null))
@@ -325,36 +274,6 @@ namespace Nexus.Client.ModAuthoring
 		}
 
 		#endregion
-
-		/// <summary>
-		/// Handles the <see cref="SevenZipExtractor.FileExtractionFinished"/> event of
-		/// the archive extractors.
-		/// </summary>
-		/// <remarks>
-		/// This cancels the extraction if the user has cancelled the task. This also updates
-		/// the item progress.
-		/// </remarks>
-		/// <param name="sender">The object that raised the event.</param>
-		/// <param name="e">A <see cref="FileInfoEventArgs"/> describing the event arguments.</param>
-		private void Extractor_FileExtractionFinished(object sender, FileInfoEventArgs e)
-		{
-			e.Cancel = Status == TaskStatus.Cancelling;
-			StepItemProgress();
-		}
-
-		/// <summary>
-		/// Handles the <see cref="SevenZipExtractor.FileExtractionStarted"/> event of
-		/// the archive extractors.
-		/// </summary>
-		/// <remarks>
-		/// This cancels the extraction if the user has cancelled the task.
-		/// </remarks>
-		/// <param name="sender">The object that raised the event.</param>
-		/// <param name="e">A <see cref="FileInfoEventArgs"/> describing the event arguments.</param>
-		private void Extractor_FileExtractionStarted(object sender, FileInfoEventArgs e)
-		{
-			e.Cancel = Status == TaskStatus.Cancelling;
-		}
 
 		/// <summary>
 		/// Handles the <see cref="IModCompressor.FileCompressionFinished"/> event of

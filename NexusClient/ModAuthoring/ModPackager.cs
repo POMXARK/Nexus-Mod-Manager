@@ -8,7 +8,6 @@ using Nexus.UI.Controls;
 using Nexus.Client.ModManagement.Scripting;
 using Nexus.Client.Mods;
 using Nexus.Client.Util;
-using SevenZip;
 
 namespace Nexus.Client.ModAuthoring
 {
@@ -88,7 +87,6 @@ namespace Nexus.Client.ModAuthoring
 			 */
 
 			string strTmpDirectory = null;
-			SevenZipCompressor szcCompressor = null;
 			try
 			{
 				ItemMessage = "Finding Mod Files...";
@@ -177,43 +175,12 @@ namespace Nexus.Client.ModAuthoring
 				ItemMessage = "Compressing Files...";
 				ItemProgressMaximum = dicFiles.Count;
 				ItemProgress = 0;
-
-				szcCompressor = new SevenZipCompressor();
-				szcCompressor.CompressionLevel = CompressionLevel.Fast;
-				szcCompressor.ArchiveFormat = OutArchiveFormat.SevenZip;
-				szcCompressor.CompressionMethod = CompressionMethod.Default;
-				switch (szcCompressor.ArchiveFormat)
-				{
-					case OutArchiveFormat.Zip:
-					case OutArchiveFormat.GZip:
-					case OutArchiveFormat.BZip2:
-						szcCompressor.CustomParameters.Add("mt", "on");
-						break;
-					case OutArchiveFormat.SevenZip:
-					case OutArchiveFormat.XZ:
-						szcCompressor.CustomParameters.Add("mt", "on");
-						szcCompressor.CustomParameters.Add("s", "off");
-						break;
-				}
-				szcCompressor.CompressionMode = CompressionMode.Create;
-				szcCompressor.FileCompressionStarted += new EventHandler<FileNameEventArgs>(Compressor_FileCompressionStarted);
-				szcCompressor.FileCompressionFinished += new EventHandler<EventArgs>(Compressor_FileCompressionFinished);
-
-				szcCompressor.CompressFileDictionary(dicFiles, strFileName);
+				
 			}
 			finally
 			{
 				if (!String.IsNullOrEmpty(strTmpDirectory))
 				{
-					if (szcCompressor != null)
-					{
-						szcCompressor = null;
-						//this is bad form - really we should be disposing szcCompressor, but
-						// we can't as it doesn't implement IDisposable, so we have to rely
-						// on the garbage collector the force szcCompressor to release its
-						// resources (in this case, file locks)
-						System.GC.Collect();
-					}
 					//this try/catch is just in case the GC doesn't go as expected
 					// and szcCompressor didn't release its resources
 					try
@@ -227,21 +194,7 @@ namespace Nexus.Client.ModAuthoring
 			}
 			return null;
 		}
-
-		/// <summary>
-		/// Called when a file is about to be added to a new mod.
-		/// </summary>
-		/// <remarks>
-		/// This cancels the compression if the task has been cancelled.
-		/// </remarks>
-		/// <param name="sender">The object that raised the event.</param>
-		/// <param name="e">A <see cref="FileNameEventArgs"/> describing the event arguments.</param>
-		private void Compressor_FileCompressionStarted(object sender, FileNameEventArgs e)
-		{
-			ItemMessage = String.Format("Adding {0}...", e.FileName);
-			e.Cancel = Status == TaskStatus.Cancelling;
-		}
-
+		
 		/// <summary>
 		/// Called when a file has been added to a new mod.
 		/// </summary>

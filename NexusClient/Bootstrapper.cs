@@ -1,4 +1,6 @@
-﻿namespace Nexus.Client
+﻿using Nexus.Client.UI;
+
+namespace Nexus.Client
 {
     using System;
     using System.Collections.Generic;
@@ -9,17 +11,14 @@
     using System.Windows.Forms;
     using System.Xml.Serialization;
 
-    using Nexus.Client.BackgroundTasks;
-    using Nexus.Client.Games;
-    using Nexus.Client.ModRepositories;
-    using Nexus.Client.Properties;
-    using Nexus.Client.Settings;
-    using Nexus.Client.Util;
+    using BackgroundTasks;
+    using Games;
+    using ModRepositories;
+    using Properties;
+    using Settings;
+    using Util;
     using Nexus.UI;
     using Nexus.UI.Controls;
-    using Nexus.Client.UI;
-
-    using SevenZip;
 
     /// <summary>
     /// This class is responsible for creating all the services the application needs, and making sure that the
@@ -373,7 +372,6 @@
 		protected void SetCompressorPath(EnvironmentInfo environmentInfo)
 		{
 			var sevenZipPath = Path.Combine(environmentInfo.ProgrammeInfoDirectory, environmentInfo.Is64BitProcess ? "7z-64bit.dll" : "7z-32bit.dll");
-			SevenZipCompressor.SetLibraryPath(sevenZipPath);
 		}
 
         /// <summary>

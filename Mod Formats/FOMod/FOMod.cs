@@ -30,7 +30,6 @@
 		#region Fields
 
 		private readonly string _nestedFilePath;
-		private readonly Archive _archiveFile;
 		private readonly string _cachePath;
 		private readonly Dictionary<string, string> _movedArchiveFiles = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 		private readonly string _readmePath = null;
@@ -388,7 +387,6 @@
 			string checkScriptType = null;
 
 			ModArchivePath = filePath;
-			_archiveFile = new Archive(filePath);
 
 			_downloadDate = File.GetLastWriteTime(ModArchivePath);
 
@@ -482,24 +480,9 @@
 			{
 				#region Temporary fix for nested .dazip files
 
-				var strNested = _archiveFile.GetFiles("", "*.dazip", true);
-
-				if (strNested.Length == 1)
-				{
-					var strFilePath = Path.Combine(Path.Combine(Path.GetTempPath(), "NMM"), strNested[0]);
-					FileUtil.WriteAllBytes(strFilePath, GetFile(strNested[0]));
-
-					if (File.Exists(strFilePath))
-					{
-						_archiveFile = new Archive(strFilePath);
-						_nestedFilePath = strFilePath;
-					}
-				}
-
 				#endregion
 			}
-
-			_archiveFile.ReadOnlyInitProgressUpdated += ArchiveFile_ReadOnlyInitProgressUpdated;
+			
 
 			if (checkPrefix)
 			{
@@ -541,8 +524,7 @@
 				_installScriptPath = checkScriptPath;
 				_installScriptType = string.IsNullOrEmpty(checkScriptType) ? null : scriptTypeRegistry.Types.FirstOrDefault(x => x.TypeName.Equals(checkScriptType));
 			}
-
-			_archiveFile.FilesChanged += Archive_FilesChanged;
+			
 
 			//check for screenshot
 			string[] strScreenshots;
@@ -554,17 +536,7 @@
 				var fileList = Directory.GetFiles(Path.Combine(_cachePath, GetRealPath("fomod")), "screenshot*", SearchOption.AllDirectories);
 				strScreenshots = fileList;
 			}
-			else
-			{
-				strScreenshots = _archiveFile.GetFiles(GetRealPath("fomod"), "screenshot*", false);
-			}
-
-			//TODO make sure the file is a valid image
-			if (strScreenshots.Length > 0)
-			{
-				ScreenshotPath = strScreenshots[0];
-			}
-
+			
 			var cacheFile = Path.Combine(strCachePath, "cacheInfo.txt");
 
 			if (!File.Exists(cacheFile) || !useCache)
@@ -665,13 +637,11 @@
 		/// <inheritdoc />
 		public void BeginReadOnlyTransaction(FileUtil fileUtil)
 		{
-			_archiveFile.BeginReadOnlyTransaction(fileUtil);
 		}
 
 		/// <inheritdoc />
 		public void EndReadOnlyTransaction()
 		{
-			_archiveFile.EndReadOnlyTransaction();
 		}
 
 		/// <summary>
@@ -708,42 +678,9 @@
 			while (stkPaths.Count > 0)
 			{
 				var strSourcePath = stkPaths.Pop();
-				var directories = _archiveFile.GetDirectories(strSourcePath);
 				var booFoundData = false;
 				var booFoundPrefix = false;
-
-				foreach (var strDirectory in directories)
-				{
-					var booSkipFolder = false;
-
-					foreach (var folder in IgnoreFolders)
-					{
-						if (strDirectory.IndexOf(folder, StringComparison.InvariantCultureIgnoreCase) >= 0)
-						{
-							booSkipFolder = true;
-							break;
-						}
-					}
-
-					if (booSkipFolder)
-					{
-						continue;
-					}
-
-					stkPaths.Push(strDirectory);
-
-					if (StopFolders.Contains(Path.GetFileName(strDirectory), StringComparer.InvariantCultureIgnoreCase))
-					{
-						booFoundPrefix = true;
-						break;
-					}
-
-					if (_usesPlugins)
-					{
-						booFoundData |= Path.GetFileName(strDirectory).Equals(PluginsDirectoryName, StringComparison.OrdinalIgnoreCase);
-					}
-				}
-
+				
 				if (booFoundPrefix)
 				{
 					strPrefixPath = strSourcePath;
@@ -762,11 +699,6 @@
 
 					foreach (var strExtension in PluginExtensions)
 					{
-						if (_archiveFile.GetFilesWithExtension(strSourcePath, strExtension, false).Length > 0)
-						{
-							booFound = true;
-							break;
-						}
 					}
 
 					if (booFound)
@@ -796,36 +728,8 @@
 
 			_movedArchiveFiles.Clear();
 
-			var files = _archiveFile.GetFiles("/", true);
 			var intTrimLength = pathPrefix.Length;
-
-			for (var i = files.Length - 1; i >= 0; i--)
-			{
-				files[i] = files[i].Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
-				var file = files[i];
-
-				string newFileName;
-
-				if (!file.StartsWith(pathPrefix, StringComparison.OrdinalIgnoreCase))
-				{
-					newFileName = file;
-					var directoryName = Path.GetDirectoryName(newFileName);
-					var fileName = Path.GetFileNameWithoutExtension(file);
-					var extension = Path.GetExtension(file);
-
-					for (var j = 1; _movedArchiveFiles.ContainsKey(newFileName); j++)
-					{
-						newFileName = Path.Combine(directoryName, fileName + " " + j + extension);
-					}
-				}
-				else
-				{
-					newFileName = file.Remove(0, intTrimLength);
-				}
-
-				_movedArchiveFiles[newFileName] = file;
-			}
-
+			
 			return pathPrefix;
 		}
 
@@ -873,7 +777,7 @@
 				return false;
 			}
 
-			return _movedArchiveFiles.ContainsKey(strPath) || _archiveFile.ContainsFile(GetRealPath(strPath));
+			return _movedArchiveFiles.ContainsKey(strPath);
 		}
 
 		/// <summary>
@@ -910,11 +814,6 @@
 		/// <param name="path">The path of the file to delete.</param>
 		protected void DeleteFile(string path)
 		{
-			if (AllowArchiveEdits && !_archiveFile.ReadOnly && !_archiveFile.IsSolid)
-			{
-				_archiveFile.DeleteFile(GetRealPath(path));
-			}
-
 			if (Directory.Exists(_cachePath) && File.Exists(Path.Combine(_cachePath, GetRealPath(path))))
 			{
 				FileUtil.ForceDelete(Path.Combine(_cachePath, GetRealPath(path)));
@@ -928,11 +827,6 @@
 		/// <param name="data">The new file data.</param>
 		protected void ReplaceFile(string path, byte[] data)
 		{
-			if (AllowArchiveEdits && !_archiveFile.ReadOnly && !_archiveFile.IsSolid)
-			{
-				_archiveFile.ReplaceFile(GetRealPath(path), data);
-			}
-
 			var fileInfo = new FileInfo(Path.Combine(_cachePath, GetRealPath(path)));
 
 			if (Directory.Exists(_cachePath) && (File.Exists(Path.Combine(_cachePath, GetRealPath(path))) || fileInfo.IsReadOnly))
@@ -948,11 +842,6 @@
 		/// <param name="data">The new file data.</param>
 		protected void CreateOrReplaceFile(string path, byte[] data)
 		{
-			if (AllowArchiveEdits && !_archiveFile.ReadOnly && !_archiveFile.IsSolid)
-			{
-				_archiveFile.ReplaceFile(GetRealPath(path), data);
-			}
-
 			if (Directory.Exists(_cachePath))
 			{
 				FileUtil.ForceDelete(Path.Combine(_cachePath, GetRealPath(path)));
@@ -967,11 +856,6 @@
 		/// <param name="data">The new file text.</param>
 		protected void ReplaceFile(string path, string data)
 		{
-			if (AllowArchiveEdits && !_archiveFile.ReadOnly && !_archiveFile.IsSolid)
-			{
-				_archiveFile.ReplaceFile(GetRealPath(path), data);
-			}
-
 			var fiFile = new FileInfo(Path.Combine(_cachePath, GetRealPath(path)));
 
 			if (Directory.Exists(_cachePath) && (File.Exists(Path.Combine(_cachePath, GetRealPath(path))) || fiFile.IsReadOnly))
@@ -995,22 +879,13 @@
 					: throw new FileNotFoundException("File doesn't exist in FOMod", file);
 			}
 
-			return Directory.Exists(_cachePath) && File.Exists(Path.Combine(_cachePath, GetRealPath(file)))
-				? File.ReadAllBytes(Path.Combine(_cachePath, GetRealPath(file)))
-				: _archiveFile.GetFileContents(GetRealPath(file));
+			return File.ReadAllBytes(Path.Combine(_cachePath, GetRealPath(file)));
 		}
 
 		/// <inheritdoc />
 		public FileStream GetFileStream(string file)
 		{
-			// File is present in cache
-			if (Directory.Exists(_cachePath) && File.Exists(Path.Combine(_cachePath, GetRealPath(file))))
-			{
 				return new FileStream(file, FileMode.Open);
-			}
-
-			// Otherwise grab file from archive.
-			return _archiveFile.GetFileStream(GetRealPath(file), _environmentInfo.TemporaryPath);
 		}
 
 		/// <inheritdoc />
@@ -1049,18 +924,7 @@
 
 				_movedArchiveInitialized = true;
 			}
-
-			foreach (var file in _archiveFile.GetFiles(folderPath, recurse))
-			{
-				if (!_movedArchiveFiles.ContainsValue(file))
-				{
-					if (!file.StartsWith("fomod", StringComparison.OrdinalIgnoreCase))
-					{
-						files.Add(file);
-					}
-				}
-			}
-
+			
 			var pathPrefix = folderPath ?? "";
 			pathPrefix = pathPrefix.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
 			pathPrefix = pathPrefix.Trim(Path.DirectorySeparatorChar);

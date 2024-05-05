@@ -33,23 +33,7 @@ namespace Nexus.Client.Mods
 		/// <param name="p_strPath">The path for which to get the cache file.</param>
 		/// <returns>The path to the specified mod's cache file.</returns>
 		string GetCacheFilePath(string p_strPath);
-
-		/// <summary>
-		/// Gets the cache file for the specified mod.
-		/// </summary>
-		/// <param name="p_modMod">The mod for which to get the cache file.</param>
-		/// <returns>The cache file for the specified mod, or <c>null</c>
-		/// if there is no cache file.</returns>
-		Archive GetCacheFile(IMod p_modMod);
-
-		/// <summary>
-		/// Gets the cache file for the specified path.
-		/// </summary>
-		/// <param name="p_strPath">The path for which to get the cache file.</param>
-		/// <returns>The cache file for the specified path, or <c>null</c>
-		/// if there is no cache file.</returns>
-		Archive GetCacheFile(string p_strPath);
-
+		
 		/// <summary>
 		/// Creates a cache file for the given mod, containing the specified files.
 		/// </summary>

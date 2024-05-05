@@ -1,11 +1,10 @@
 ﻿using Nexus.Client.Games.Gamebryo;
 using Nexus.Client.UI;
 using Nexus.Client.Util;
-using Nexus.Client.Games.Steam;
-using System.Linq;
 using System.IO;
-using System;
+#if OS_WINDOWS
 using Microsoft.Win32;
+#endif
 using System.Diagnostics;
 
 namespace Nexus.Client.Games.SkyrimGOG
@@ -15,7 +14,7 @@ namespace Nexus.Client.Games.SkyrimGOG
 	/// </summary>
 	public class SkyrimGOGGameModeFactory : GamebryoGameModeFactory
 	{
-		private readonly IGameModeDescriptor m_gmdGameModeDescriptor = null;
+		private readonly IGameModeDescriptor m_gmdGameModeDescriptor;
 
 		#region Properties
 
@@ -23,13 +22,7 @@ namespace Nexus.Client.Games.SkyrimGOG
 		/// Gets the descriptor of the game mode that this factory builds.
 		/// </summary>
 		/// <value>The descriptor of the game mode that this factory builds.</value>
-		public override IGameModeDescriptor GameModeDescriptor
-		{
-			get
-			{
-				return m_gmdGameModeDescriptor;
-			}
-		}
+		public override IGameModeDescriptor GameModeDescriptor => m_gmdGameModeDescriptor;
 
 		#endregion
 
@@ -79,9 +72,13 @@ namespace Nexus.Client.Games.SkyrimGOG
             var strValue = string.Empty;
 
 			Trace.TraceInformation("Getting GOG install folder.");
-
+			
+#if OS_WINDOWS // fix_2			
 			var gogPath = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\GOG.com\Games\1711230643", "PATH", null)?.ToString();
-
+#else
+			var gogPath = "";
+#endif
+			
 			if (gogPath != null && Directory.Exists(gogPath))
 				strValue = gogPath;
 

@@ -2,13 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Xml;
-using System.Xml.Linq;
-using System.Xml.XPath;
 using System.Text;
 using ChinhDo.Transactions;
-using Nexus.Client.Games.BaldursGate3.Settings;
 using Nexus.Client.Games.BaldursGate3.Settings.UI;
 using Nexus.Client.Games.BaldursGate3.Tools;
 using Nexus.Client.ModManagement;
@@ -21,9 +17,7 @@ using Nexus.Client.Settings.UI;
 using Nexus.Client.Games.Tools;
 using Nexus.Client.Updating;
 using Nexus.Client.Util;
-using System.Diagnostics;
 using Newtonsoft.Json;
-using System.Windows.Forms;
 
 namespace Nexus.Client.Games.BaldursGate3
 {

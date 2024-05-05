@@ -219,7 +219,7 @@
 			StringBuilder stbStatus = new StringBuilder();
 			stbStatus.AppendFormat("Mod Manager Version: {0}{1}", Assembly.GetExecutingAssembly().GetName().Version, p_eifEnvironmentInfo.IsMonoMode ? "(mono)" : "").AppendLine();
 			stbStatus.AppendFormat("OS version: {0}", Environment.OSVersion.ToString()).AppendLine();
-
+#if OS_WINDOWS // fix_1
 			stbStatus.AppendLine("Installed .NET Versions:");
 			RegistryKey rkyIinstalledVersions = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\NET Framework Setup\NDP");
 			string[] strVersionNames = rkyIinstalledVersions.GetSubKeyNames();
@@ -241,7 +241,7 @@
                     stbStatus.AppendLine("\tv4.5: Not found.");
                 }
 			}
-
+#endif
 			stbStatus.AppendFormat("Tracing is forced: {0}", p_booForceTrace).AppendLine();
 			Trace.TraceInformation(stbStatus.ToString());
 		}

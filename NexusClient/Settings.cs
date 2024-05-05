@@ -2,10 +2,8 @@
 {
     using System.Diagnostics;
     using System.IO;
-    using System.Threading;
 
     using Client.Settings;
-    using Util;
 
     /// <summary>
     /// This class adds the <see cref="ISettings"/> to the project's <see cref="Properties.Settings"/>

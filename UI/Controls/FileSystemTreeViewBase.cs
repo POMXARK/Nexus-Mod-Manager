@@ -158,20 +158,19 @@ namespace Nexus.UI.Controls
 			Cursor = Cursors.WaitCursor;
 			try
 			{
-				if (!Archive.IsArchivePath(p_strFile))
+			
+				FileSystemInfo fsiInfo = null;
+				if (Directory.Exists(p_strFile))
+					fsiInfo = new DirectoryInfo(p_strFile);
+				else if (ShowFiles && File.Exists(p_strFile) && !".lnk".Equals(Path.GetExtension(p_strFile), StringComparison.OrdinalIgnoreCase))
 				{
-					FileSystemInfo fsiInfo = null;
-					if (Directory.Exists(p_strFile))
-						fsiInfo = new DirectoryInfo(p_strFile);
-					else if (ShowFiles && File.Exists(p_strFile) && !".lnk".Equals(Path.GetExtension(p_strFile), StringComparison.OrdinalIgnoreCase))
-					{
-						fsiInfo = new FileInfo(p_strFile);
-					}
-					else
-						return null;
-					if (!FileUtil.IsDrivePath(p_strFile) && ((fsiInfo.Attributes & FileAttributes.System) > 0))
-						return null;
+					fsiInfo = new FileInfo(p_strFile);
 				}
+				else
+					return null;
+				if (!FileUtil.IsDrivePath(p_strFile) && ((fsiInfo.Attributes & FileAttributes.System) > 0))
+					return null;
+				
 
 				FileSystemTreeNode tndFile = null;
 				System.Windows.Forms.TreeNodeCollection tncSiblings = (p_tndRoot == null) ? this.Nodes : p_tndRoot.Nodes;
@@ -240,24 +239,7 @@ namespace Nexus.UI.Controls
 			{
 				p_tndFolder.LastSource.IsLoaded = true;
 				string strPath = p_tndFolder.LastSource;
-				if (BrowseIntoArchives && (Archive.IsArchivePath(strPath) || p_tndFolder.IsArchive))
-				{
-					KeyValuePair<string, string> kvpPath = new KeyValuePair<string, string>(p_tndFolder.LastSource, Path.DirectorySeparatorChar.ToString());
-					if (Archive.IsArchivePath(strPath))
-						kvpPath = Archive.ParseArchivePath(strPath);
-					Archive arcArchive = new Archive(kvpPath.Key);
-					string[] strFolders = arcArchive.GetDirectories(kvpPath.Value);
-					for (Int32 i = 0; i < strFolders.Length; i++)
-						AddPath(p_tndFolder, Archive.GenerateArchivePath(kvpPath.Key, strFolders[i]));
-					if (ShowFiles)
-					{
-						string[] strFiles = arcArchive.GetFiles(kvpPath.Value, false);
-						for (Int32 i = 0; i < strFiles.Length; i++)
-							AddPath(p_tndFolder, Archive.GenerateArchivePath(kvpPath.Key, strFiles[i]));
-					}
-				}
-				else
-				{
+				
 					try
 					{
 						string[] strFolders = Directory.GetDirectories(strPath);
@@ -273,7 +255,6 @@ namespace Nexus.UI.Controls
 					catch (UnauthorizedAccessException)
 					{
 					}
-				}
 			}
 			finally
 			{

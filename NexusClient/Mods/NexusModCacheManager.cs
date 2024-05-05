@@ -4,11 +4,8 @@ using System.Diagnostics;
 using System.IO.Compression;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using Nexus.Client.Util;
-using Nexus.Client.Util.Collections;
-using SevenZip;
 
 namespace Nexus.Client.Mods
 {
@@ -102,68 +99,7 @@ namespace Nexus.Client.Mods
 		{
 			return Path.Combine(ModCacheDirectory, Path.GetFileNameWithoutExtension(p_strPath));
 		}
-
-		/// <summary>
-		/// Gets the cache file for the specified path.
-		/// </summary>
-		/// <param name="p_strPath">The path for which to get the cache file.</param>
-		/// <returns>The cache file for the specified path, or <c>null</c>
-		/// if there is no cache file.</returns>
-		public Archive GetCacheFile(string p_strPath)
-		{
-			string strCachePath = Path.Combine(ModCacheDirectory, Path.GetFileName(p_strPath) + ".zip");
-			if (File.Exists(strCachePath))
-			{
-				try
-				{
-					return new Archive(strCachePath);
-				}
-				catch (SevenZipArchiveException)
-				{
-					//the cachef ile is corrupt - so delete it
-					FileUtil.ForceDelete(strCachePath);
-				}
-				catch (UnauthorizedAccessException)
-				{
-					//we can't access the file - who know why
-					//destroy it so we can try again
-					FileUtil.ForceDelete(strCachePath);
-				}
-			}
-			return null;
-		}
-
-		/// <summary>
-		/// Gets the cache file for the specified mod.
-		/// </summary>
-		/// <param name="p_modMod">The mod for which to get the cache file.</param>
-		/// <returns>The cache file for the specified mod, or <c>null</c>
-		/// if there is no cache file.</returns>
-		public Archive GetCacheFile(IMod p_modMod)
-		{
-
-			string strCachePath = GetCacheFilePath(p_modMod);
-			if (File.Exists(strCachePath))
-			{
-				try
-				{
-					return new Archive(strCachePath);
-				}
-				catch (SevenZipArchiveException)
-				{
-					//the cachef ile is corrupt - so delete it
-					FileUtil.ForceDelete(strCachePath);
-				}
-				catch (UnauthorizedAccessException)
-				{
-					//we can't access the file - who know why
-					//destroy it so we can try again
-					FileUtil.ForceDelete(strCachePath);
-				}
-			}
-			return null;
-		}
-
+		
 		/// <summary>
 		/// Creates a cache file for the given mod, containing the specified files.
 		/// </summary>

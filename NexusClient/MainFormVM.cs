@@ -537,14 +537,11 @@
 			{
 				gsgAssociationSettings.AddFileAssociation(mftFormat.Extension, mftFormat.Name);
 			}
-
-			var mosModOptions = new ModOptionsSettingsGroup(p_eifEnvironmentInfo);
-
+			
 			var lstSettingGroups = new List<ISettingsGroupView>
 			{
 				new GeneralSettingsPage(gsgGeneralSettings),
 				new OsSettingsPage(gsgAssociationSettings),
-				new ModOptionsPage(mosModOptions)
 			};
 
 			var dsgDownloadSettings = new DownloadSettingsGroup(p_eifEnvironmentInfo, ModRepository);

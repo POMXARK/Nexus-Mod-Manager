@@ -1,15 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using Nexus.Client.BackgroundTasks;
-using Nexus.Client.PluginManagement.UI;
-using Nexus.Client.PluginManagement;
 using Nexus.Client.Util;
 using Nexus.Client.UI;
-using Nexus.Client.Util.Collections;
-using SevenZip;
 
 namespace Nexus.Client.ModManagement
 {

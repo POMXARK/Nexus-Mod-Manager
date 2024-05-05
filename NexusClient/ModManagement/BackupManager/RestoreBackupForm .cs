@@ -1,13 +1,10 @@
 ﻿using System;
-using System.Collections.ObjectModel;
 using System.IO;
-using System.Linq;
 using System.Security;
 using System.Security.Permissions;
 using System.Security.Principal;
 using System.Windows.Forms;
 using Nexus.Client.UI;
-using SevenZip;
 
 
 namespace Nexus.Client.ModManagement.UI
@@ -108,17 +105,6 @@ namespace Nexus.Client.ModManagement.UI
 				}
 				else
 				{
-
-					if (bkManager.GameModeNameCheck.Count() == 0)
-					{
-						lblEstimated.Visible = true;
-						lblEstimated.ForeColor = System.Drawing.Color.Red;
-						lblEstimated.Text = string.Format("This is not a {0}'s Backup!", ModManager.GameMode.Name);
-						btYes.Enabled = false;
-						btNo.Enabled = false;
-					}
-					else
-					{
 						btYes.Enabled = true;
 						btNo.Enabled = true;
 						lblEstimated.ForeColor = System.Drawing.Color.Black;
@@ -133,7 +119,6 @@ namespace Nexus.Client.ModManagement.UI
 						lblEstimated.Visible = true;
 						lblEstimated.Text = string.Format("Estimated Restore Size:" + Environment.NewLine + "- Clicking YES: Temporary backup {0} MB - Restored files {1} MB " + Environment.NewLine + "- Clicking NO: {2} MB", Math.Round(TemporarySize, 0), Math.Round(bkManager.RestoredFiles, 0), Math.Round(bkManager.RestoredFiles, 0));
 						tbFile.Text = fdFile.FileName;
-					}
 				}
 			}
 		}

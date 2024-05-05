@@ -7,8 +7,6 @@ using System.Text.RegularExpressions;
 using Nexus.Client.ModManagement.Scripting;
 using Nexus.Client.Util;
 using Nexus.Client.Util.Collections;
-using SevenZip;
-using SevenZip.Sdk.Compression.Lzma;
 
 namespace Nexus.Client.Mods.Formats.OMod
 {
@@ -33,7 +31,6 @@ namespace Nexus.Client.Mods.Formats.OMod
 		#region Fields
 
 		private string m_strFilePath = null;
-		private Archive m_arcFile = null;
 		private string m_strCachePath = null;
 		private string m_strPrefixPath = null;
 		private Dictionary<string, string> m_dicMovedArchiveFiles = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -520,13 +517,7 @@ namespace Nexus.Client.Mods.Formats.OMod
 		/// </summary>
 		/// <value>Whether the mod is a packed OMod, or an OMod-ready archive.</value>
 		public bool IsPacked { get; private set; }
-
-		/// <summary>
-		/// Gets or sets the type of compression used by the mod.
-		/// </summary>
-		/// <value>The type of compression used by the mod.</value>
-		protected InArchiveFormat CompressionType { get; set; }
-
+		
 		/// <summary>
 		/// Gets the list of plugins in the mod.
 		/// </summary>
@@ -556,7 +547,7 @@ namespace Nexus.Client.Mods.Formats.OMod
             Format = p_mftModFormat;
 			m_strFilePath = p_strFilePath;
             m_dtDownloadDate = File.GetLastWriteTime(m_strFilePath);
-            m_arcFile = new Archive(p_strFilePath);
+            
 			ModName = Path.GetFileNameWithoutExtension(Filename);
 			bool p_booUseCache = true;
 
@@ -564,7 +555,7 @@ namespace Nexus.Client.Mods.Formats.OMod
 			DataFileList = new List<FileInfo>();
 
 			FindPathPrefix();
-			IsPacked = !m_arcFile.ContainsFile(GetRealPath(Path.Combine(CONVERSION_FOLDER, "config")));
+
 
 			string strCachePath = Path.Combine(p_mcmModCacheManager.ModCacheDirectory, Path.GetFileNameWithoutExtension(this.ModArchivePath));
 			m_strCachePath = strCachePath;
@@ -573,7 +564,7 @@ namespace Nexus.Client.Mods.Formats.OMod
 				InitializeUnpackedOmod(p_booUseCache, p_mcmModCacheManager, p_stgScriptTypeRegistry);
 			else
 				InitializePackedOmod(p_stgScriptTypeRegistry);
-			m_arcFile.FilesChanged += new EventHandler(Archive_FilesChanged);
+
 		}
 
 		#endregion
@@ -661,103 +652,9 @@ namespace Nexus.Client.Mods.Formats.OMod
 		/// <param name="p_stgScriptTypeRegistry">The registry of supported script types.</param>
 		private void InitializePackedOmod(IScriptTypeRegistry p_stgScriptTypeRegistry)
 		{
-			using (SevenZipExtractor szeOmod = new SevenZipExtractor(m_strFilePath))
-			{
-				ExtractConfig(szeOmod);
-				ExtractPluginList(szeOmod);
-				ExtractDataFileList(szeOmod);
-
-				if (szeOmod.ArchiveFileNames.Contains("plugins.crc"))
-					m_intReadOnlyInitFileBlockExtractionStages++;
-				if (szeOmod.ArchiveFileNames.Contains("data.crc"))
-					m_intReadOnlyInitFileBlockExtractionStages++;
-
-				//check for script
-				m_booHasInstallScript = false;
-				foreach (IScriptType stpScript in p_stgScriptTypeRegistry.Types)
-				{
-					foreach (string strScriptName in stpScript.FileNames)
-					{
-						if (szeOmod.ArchiveFileNames.Contains(strScriptName))
-						{
-							using (MemoryStream stmScript = new MemoryStream())
-							{
-								szeOmod.ExtractFile(strScriptName, stmScript);
-								string strCode = System.Text.Encoding.Default.GetString(stmScript.ToArray());
-								if (stpScript.ValidateScript(stpScript.LoadScript(strCode)))
-								{
-									m_booHasInstallScript = true;
-									m_stpInstallScriptType = stpScript;
-									break;
-								}
-							}
-						}
-					}
-					if (m_booHasInstallScript)
-						break;
-				}
-
-				//check for readme
-				m_booHasReadme = szeOmod.ArchiveFileNames.Contains("readme");
-
-				//check for screenshot
-				m_booHasScreenshot = szeOmod.ArchiveFileNames.Contains("image");
-			}
+			
 		}
-
-		/// <summary>
-		/// Loads the mod metadata from the config file.
-		/// </summary>
-		/// <param name="p_szeOmod">The extractor from which to read the config file.</param>
-		protected void ExtractConfig(SevenZipExtractor p_szeOmod)
-		{
-			using (MemoryStream stmConfig = new MemoryStream())
-			{
-				p_szeOmod.ExtractFile("config", stmConfig);
-				stmConfig.Position = 0;
-				LoadInfo(stmConfig.GetBuffer());
-			}
-		}
-
-		/// <summary>
-		/// Loads the list of plugins in the mod.
-		/// </summary>
-		/// <param name="p_szeOmod">The extractor from which to read the plugin list.</param>
-		protected void ExtractPluginList(SevenZipExtractor p_szeOmod)
-		{
-			if (!p_szeOmod.ArchiveFileNames.Contains("plugins.crc"))
-				return;
-			using (Stream stmPluginList = new MemoryStream())
-			{
-				p_szeOmod.ExtractFile("plugins.crc", stmPluginList);
-				stmPluginList.Position = 0;
-				using (BinaryReader brdPluginList = new BinaryReader(stmPluginList))
-				{
-					while (brdPluginList.PeekChar() != -1)
-						PluginList.Add(new FileInfo(brdPluginList.ReadString(), brdPluginList.ReadUInt32(), brdPluginList.ReadInt64()));
-				}
-			}
-		}
-
-		/// <summary>
-		/// Loads the list of data files in the mod.
-		/// </summary>
-		/// <param name="p_szeOmod">The extractor from which to read the file list.</param>
-		protected void ExtractDataFileList(SevenZipExtractor p_szeOmod)
-		{
-			if (!p_szeOmod.ArchiveFileNames.Contains("data.crc"))
-				return;
-			using (Stream stmDataFileList = new MemoryStream())
-			{
-				p_szeOmod.ExtractFile("data.crc", stmDataFileList);
-				stmDataFileList.Position = 0;
-				using (BinaryReader brdDataFileList = new BinaryReader(stmDataFileList))
-				{
-					while (brdDataFileList.PeekChar() != -1)
-						DataFileList.Add(new FileInfo(brdDataFileList.ReadString(), brdDataFileList.ReadUInt32(), brdDataFileList.ReadInt64()));
-				}
-			}
-		}
+		
 
 		#endregion
 
@@ -775,8 +672,6 @@ namespace Nexus.Client.Mods.Formats.OMod
 		{
 			if (!IsPacked)
 			{
-				m_arcFile.ReadOnlyInitProgressUpdated += new CancelProgressEventHandler(ArchiveFile_ReadOnlyInitProgressUpdated);
-				m_arcFile.BeginReadOnlyTransaction(fileUtil);
 				return;
 			}
 
@@ -792,53 +687,9 @@ namespace Nexus.Client.Mods.Formats.OMod
 				//extract the compressed file block...
 				using (Stream stmCompressedFiles = new MemoryStream())
 				{
-					using (SevenZipExtractor szeOmod = new SevenZipExtractor(m_strFilePath))
-					{
-						if (!szeOmod.ArchiveFileNames.Contains(strFileStreamName))
-							continue;
-						m_intReadOnlyInitFileBlockExtractionCurrentStage++;
-						szeOmod.ExtractFile(strFileStreamName, stmCompressedFiles);
-						switch (strFileStreamName)
-						{
-							case "plugins":
-								lstFiles = PluginList;
-								break;
-							case "data":
-								lstFiles = DataFileList;
-								break;
-							default:
-								throw new Exception("Unexpected value for file stream name: " + strFileStreamName);
-						}
-					}
-
 					stmCompressedFiles.Position = 0;
 					Int64 intTotalLength = lstFiles.Sum(x => x.Length);
 					bteUncompressedFileData = new byte[intTotalLength];
-					switch (CompressionType)
-					{
-						case InArchiveFormat.SevenZip:
-							byte[] bteProperties = new byte[5];
-							stmCompressedFiles.Read(bteProperties, 0, 5);
-							Decoder dcrDecoder = new Decoder();
-							dcrDecoder.SetDecoderProperties(bteProperties);
-							DecoderProgressWatcher dpwWatcher = new DecoderProgressWatcher(stmCompressedFiles.Length);
-							dpwWatcher.ProgressUpdated += new EventHandler<EventArgs<int>>(dpwWatcher_ProgressUpdated);
-							using (Stream stmUncompressedFiles = new MemoryStream(bteUncompressedFileData))
-								dcrDecoder.Code(stmCompressedFiles, stmUncompressedFiles, stmCompressedFiles.Length - stmCompressedFiles.Position, intTotalLength, dpwWatcher);
-							break;
-						case InArchiveFormat.Zip:
-							using (SevenZipExtractor szeZip = new SevenZipExtractor(stmCompressedFiles))
-							{
-								szeZip.Extracting += new EventHandler<ProgressEventArgs>(szeZip_Extracting);
-								using (Stream stmFile = new MemoryStream(bteUncompressedFileData))
-								{
-									szeZip.ExtractFile(0, stmFile);
-								}
-							}
-							break;
-						default:
-							throw new Exception("Cannot get files: unsupported compression type: " + CompressionType.ToString());
-					}
 				}
 
 				float fltFileStreamPercentBlockSize = FILE_BLOCK_EXTRACTION_PROGRESS_BLOCK_SIZE / m_intReadOnlyInitFileBlockExtractionStages;
@@ -897,17 +748,6 @@ namespace Nexus.Client.Mods.Formats.OMod
 		}
 
 		/// <summary>
-		/// Handles the <see cref="SevenZipExtractor.Extracting"/> event of the extractor that is
-		/// extracting the compressed files blocks.
-		/// </summary>
-		/// <param name="sender">The object that raised the event.</param>
-		/// <param name="e">An <see cref="ProgressEventArgs"/> describing the event arguments.</param>
-		private void szeZip_Extracting(object sender, ProgressEventArgs e)
-		{
-			UpdateFileStreamExtractionProgress(e.PercentDone / 100);
-		}
-
-		/// <summary>
 		/// Updates the progress of the read only initialization while extracting file blocks.
 		/// </summary>
 		/// <param name="p_fltPercentDone">The percentage of the file block that has been extracted.</param>
@@ -942,8 +782,6 @@ namespace Nexus.Client.Mods.Formats.OMod
 		{
 			if (!IsPacked)
 			{
-				m_arcFile.EndReadOnlyTransaction();
-				m_arcFile.ReadOnlyInitProgressUpdated -= new CancelProgressEventHandler(ArchiveFile_ReadOnlyInitProgressUpdated);
 			}
 			if (!String.IsNullOrEmpty(m_strReadOnlyTempDirectory))
 				FileUtil.ForceDelete(m_strReadOnlyTempDirectory);
@@ -982,17 +820,9 @@ namespace Nexus.Client.Mods.Formats.OMod
 			while (stkPaths.Count > 0)
 			{
 				string strSourcePath = stkPaths.Pop();
-				string[] directories = m_arcFile.GetDirectories(strSourcePath);
+
 				bool booFoundPrefix = false;
-				foreach (string strDirectory in directories)
-				{
-					stkPaths.Push(strDirectory);
-					if (CONVERSION_FOLDER.Equals(Path.GetFileName(strDirectory), StringComparison.OrdinalIgnoreCase))
-					{
-						booFoundPrefix = true;
-						break;
-					}
-				}
+				
 				if (booFoundPrefix)
 				{
 					strPrefixPath = strSourcePath;
@@ -1006,26 +836,9 @@ namespace Nexus.Client.Mods.Formats.OMod
 				strPrefixPath = strPrefixPath.Trim(Path.DirectorySeparatorChar);
 				strPrefixPath += Path.DirectorySeparatorChar;
 				m_dicMovedArchiveFiles.Clear();
-				string[] strFiles = m_arcFile.GetFiles("/", true);
+			
 				Int32 intTrimLength = strPrefixPath.Length;
-				for (Int32 i = strFiles.Length - 1; i >= 0; i--)
-				{
-					strFiles[i] = strFiles[i].Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
-					string strFile = strFiles[i];
-					string strNewFileName = null;
-					if (!strFile.StartsWith(strPrefixPath, StringComparison.OrdinalIgnoreCase))
-					{
-						strNewFileName = strFile;
-						string strDirectory = Path.GetDirectoryName(strNewFileName);
-						string strFileName = Path.GetFileNameWithoutExtension(strFile);
-						string strExtension = Path.GetExtension(strFile);
-						for (Int32 j = 1; m_dicMovedArchiveFiles.ContainsKey(strNewFileName); j++)
-							strNewFileName = Path.Combine(strDirectory, strFileName + " " + j + strExtension);
-					}
-					else
-						strNewFileName = strFile.Remove(0, intTrimLength);
-					m_dicMovedArchiveFiles[strNewFileName] = strFile;
-				}
+				
 			}
 			m_strPrefixPath = strPrefixPath;
 		}
@@ -1081,8 +894,7 @@ namespace Nexus.Client.Mods.Formats.OMod
 			{
 				if (m_dicMovedArchiveFiles.ContainsKey(strPath))
 					return true;
-				if (m_arcFile.ContainsFile(GetRealPath(strPath)))
-					return true;
+
 				return ((Directory.Exists(m_strCachePath)) && (File.Exists(Path.Combine(m_strCachePath, GetRealPath(strPath)))));
 			}
 			if (PluginList.Contains(x => x.Name.Equals(strPath, StringComparison.OrdinalIgnoreCase)))
@@ -1100,8 +912,7 @@ namespace Nexus.Client.Mods.Formats.OMod
 			//if this is a packed OMod, and the file is read-only, we want it to crash
 			// if it's no patcked, then we simply remove it from the cache, so we don't want
 			// a crash.
-			if (m_booAllowArchiveEdits && (!m_arcFile.ReadOnly || IsPacked))
-				m_arcFile.DeleteFile(strPath);
+
 			if ((Directory.Exists(m_strCachePath) && (File.Exists(Path.Combine(m_strCachePath, GetRealPath(p_strPath))))))
 				FileUtil.ForceDelete(Path.Combine(m_strCachePath, GetRealPath(p_strPath)));
 		}
@@ -1114,8 +925,7 @@ namespace Nexus.Client.Mods.Formats.OMod
 		protected void ReplaceSpecialFile(string p_strPath, byte[] p_bteData)
 		{
 			string strPath = GetRealPath(IsPacked ? p_strPath : Path.Combine(CONVERSION_FOLDER, p_strPath));
-			if (m_booAllowArchiveEdits && (!m_arcFile.ReadOnly || IsPacked))
-				m_arcFile.ReplaceFile(p_strPath, p_bteData);
+
 
 			System.IO.FileInfo fiFile = new System.IO.FileInfo(Path.Combine(m_strCachePath, GetRealPath(p_strPath)));
 
@@ -1134,8 +944,7 @@ namespace Nexus.Client.Mods.Formats.OMod
 		protected void ReplaceSpecialFile(string p_strPath, string p_strData)
 		{
 			string strPath = GetRealPath(IsPacked ? p_strPath : Path.Combine(CONVERSION_FOLDER, p_strPath));
-			if (m_booAllowArchiveEdits && (!m_arcFile.ReadOnly || IsPacked))
-				m_arcFile.ReplaceFile(p_strPath, p_strData);
+
 
 			System.IO.FileInfo fiFile = new System.IO.FileInfo(Path.Combine(m_strCachePath, GetRealPath(p_strPath)));
 						
@@ -1191,8 +1000,7 @@ namespace Nexus.Client.Mods.Formats.OMod
 
 				if ((Directory.Exists(m_strCachePath) && (File.Exists(Path.Combine(m_strCachePath, GetRealPath(strPath))))))
 					return (File.ReadAllBytes(Path.Combine(m_strCachePath, GetRealPath(strPath))));
-												
-				bteFile = m_arcFile.GetFileContents(GetRealPath(strPath));
+
 				if (!booIsBinary)
 					bteFile = System.Text.Encoding.Default.GetBytes(TextUtil.ByteToString(bteFile).Trim('\0'));
 			}
@@ -1200,8 +1008,7 @@ namespace Nexus.Client.Mods.Formats.OMod
 			{
 				using (MemoryStream msmFile = new MemoryStream())
 				{
-					using (SevenZipExtractor szeOmod = new SevenZipExtractor(m_strFilePath))
-						szeOmod.ExtractFile(p_strFile, msmFile);
+
 					if (booIsBinary)
 						bteFile = msmFile.GetBuffer();
 					else
@@ -1235,8 +1042,7 @@ namespace Nexus.Client.Mods.Formats.OMod
 			{
 				if ((Directory.Exists(m_strCachePath) && (File.Exists(Path.Combine(m_strCachePath, GetRealPath(file))))))
 					return (File.ReadAllBytes(Path.Combine(m_strCachePath, GetRealPath(file))));
-
-				return m_arcFile.GetFileContents(GetRealPath(file));
+				
 			}
 
 			if (!String.IsNullOrEmpty(m_strReadOnlyTempDirectory))
@@ -1246,45 +1052,12 @@ namespace Nexus.Client.Mods.Formats.OMod
 			byte[] bteFileBlock = null;
 			using (Stream stmDataFiles = new MemoryStream())
 			{
-				using (SevenZipExtractor szeOmod = new SevenZipExtractor(m_strFilePath))
-				{
-					if (Path.GetExtension(file).Equals(".esm", StringComparison.OrdinalIgnoreCase) || Path.GetExtension(file).Equals(".esp", StringComparison.OrdinalIgnoreCase))
-					{
-						szeOmod.ExtractFile("plugins", stmDataFiles);
-						lstFiles = PluginList;
-					}
-					else
-					{
-						szeOmod.ExtractFile("data", stmDataFiles);
-						lstFiles = DataFileList;
-					}
-				}
+				
 				stmDataFiles.Position = 0;
 
 				Int64 intTotalLength = lstFiles.Sum(x => x.Length);
 				bteFileBlock = new byte[intTotalLength];
-				switch (CompressionType)
-				{
-					case InArchiveFormat.SevenZip:
-						byte[] bteProperties = new byte[5];
-						stmDataFiles.Read(bteProperties, 0, 5);
-						Decoder dcrDecoder = new Decoder();
-						dcrDecoder.SetDecoderProperties(bteProperties);
-						using (Stream stmFile = new MemoryStream(bteFileBlock))
-							dcrDecoder.Code(stmDataFiles, stmFile, stmDataFiles.Length - stmDataFiles.Position, intTotalLength, null);
-						break;
-					case InArchiveFormat.Zip:
-						using (SevenZipExtractor szeZip = new SevenZipExtractor(stmDataFiles))
-						{
-							using (Stream stmFile = new MemoryStream(bteFileBlock))
-							{
-								szeZip.ExtractFile(0, stmFile);
-							}
-						}
-						break;
-					default:
-						throw new Exception("Cannot get file: unsupported compression type: " + CompressionType.ToString());
-				}
+				
 			}
 			Int64 intFileStart = 0;
 			byte[] bteFile = null;
@@ -1333,11 +1106,6 @@ namespace Nexus.Client.Mods.Formats.OMod
 				{
 					return new FileStream(strPath, FileMode.Open);
 				}
-				else
-				{
-					// Otherwise grab file from archive.
-					return m_arcFile.GetFileStream(GetRealPath(file), m_eifEnvironmentInfo.TemporaryPath);
-				}
             }
 
             if (!String.IsNullOrEmpty(m_strReadOnlyTempDirectory))
@@ -1356,48 +1124,12 @@ namespace Nexus.Client.Mods.Formats.OMod
 
             using (Stream stmDataFiles = new MemoryStream())
             {
-                using (SevenZipExtractor szeOmod = new SevenZipExtractor(m_strFilePath))
-                {
-                    if (Path.GetExtension(file).Equals(".esm", StringComparison.OrdinalIgnoreCase) || Path.GetExtension(file).Equals(".esp", StringComparison.OrdinalIgnoreCase))
-                    {
-                        szeOmod.ExtractFile("plugins", stmDataFiles);
-                        lstFiles = PluginList;
-                    }
-                    else
-                    {
-                        szeOmod.ExtractFile("data", stmDataFiles);
-                        lstFiles = DataFileList;
-                    }
-                }
+                
                 stmDataFiles.Position = 0;                                
 
                 Int64 intTotalLength = lstFiles.Sum(x => x.Length);
                 
-                switch (CompressionType)
-                {
-                    case InArchiveFormat.SevenZip:
-                        byte[] bteProperties = new byte[5];
-                        stmDataFiles.Read(bteProperties, 0, 5);
-                        Decoder dcrDecoder = new Decoder();
-                        dcrDecoder.SetDecoderProperties(bteProperties);
-                        
-                        using (var sw = new StreamWriter(strTempFile, false))
-                        {
-                            dcrDecoder.Code(stmDataFiles, sw.BaseStream, stmDataFiles.Length - stmDataFiles.Position, intTotalLength, null);
-                        }
-                        break;
-                    case InArchiveFormat.Zip:
-                        using (SevenZipExtractor szeZip = new SevenZipExtractor(stmDataFiles))
-                        {
-                            using (var sw = new StreamWriter(strTempFile, false))
-                            {
-                                szeZip.ExtractFile(0, sw.BaseStream);
-                            }
-                        }
-                        break;
-                    default:
-                        throw new Exception("Cannot get file: unsupported compression type: " + CompressionType.ToString());
-                }
+                
             }
 
             return new FileStream(strTempFile, FileMode.Open);
@@ -1439,10 +1171,6 @@ namespace Nexus.Client.Mods.Formats.OMod
 			List<string> lstFiles = new List<string>();
 			if (!IsPacked)
 			{
-				foreach (string strFile in m_arcFile.GetFiles(folderPath, recurse))
-					if (!m_dicMovedArchiveFiles.ContainsValue(strFile))
-						if (!strFile.StartsWith(CONVERSION_FOLDER, StringComparison.OrdinalIgnoreCase))
-							lstFiles.Add(strFile);
 				string strPathPrefix = folderPath ?? "";
 				strPathPrefix = strPathPrefix.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
 				strPathPrefix = strPathPrefix.Trim(Path.DirectorySeparatorChar);
@@ -1617,17 +1345,7 @@ namespace Nexus.Client.Mods.Formats.OMod
 						bwrConfig.Write(CreationTime.ToBinary());
 					else
 						bwrConfig.Write(CreationTime.ToString("dd\\/MM\\/yyyy HH:mm"));
-					switch (CompressionType)
-					{
-						case InArchiveFormat.SevenZip:
-							bwrConfig.Write((byte)0);
-							break;
-						case InArchiveFormat.Zip:
-							bwrConfig.Write((byte)1);
-							break;
-						default:
-							throw new Exception("Unsupported compression type for OMod: " + CompressionType);
-					}
+					
 					if (OModBaseVersion >= 1)
 						bwrConfig.Write(intBuildVersion);
 					bwrConfig.Write(OModVersion >= 7 ? OModVersion : Convert.ToByte(7));
@@ -1682,12 +1400,6 @@ namespace Nexus.Client.Mods.Formats.OMod
 					byte bteCompressionType = brdConfig.ReadByte();
 					switch (bteCompressionType)
 					{
-						case 0:
-							CompressionType = InArchiveFormat.SevenZip;
-							break;
-						case 1:
-							CompressionType = InArchiveFormat.Zip;
-							break;
 						default:
 							throw new Exception("Unrecognizes OMod compression type: " + bteCompressionType);
 					}
@@ -1753,12 +1465,6 @@ namespace Nexus.Client.Mods.Formats.OMod
 						byte bteCompressionType = brdConfig.ReadByte();
 						switch (bteCompressionType)
 						{
-							case 0:
-								CompressionType = InArchiveFormat.SevenZip;
-								break;
-							case 1:
-								CompressionType = InArchiveFormat.Zip;
-								break;
 							default:
 								return false;
 						}

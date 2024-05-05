@@ -79,7 +79,6 @@
     <Compile Include="..\SharedAssemblyInformation.cs">
       <Link>Properties\SharedAssemblyInformation.cs</Link>
     </Compile>
-    <Compile Include="Archive.cs" />
     <Compile Include="BindingHelper.cs" />
     <Compile Include="CancelEventArgs`1.cs" />
     <Compile Include="CommonData.cs" />
@@ -103,7 +102,6 @@
     <Compile Include="Collections\SortedObservableCollection.cs" />
     <Compile Include="RegistryUtil.cs" />
     <Compile Include="TextUtil.cs" />
-    <Compile Include="ThreadSafeSevenZipExtractor.cs" />
     <Compile Include="JSONSerializer.cs" />
     <Compile Include="WebPWrapper.cs" />
   </ItemGroup>

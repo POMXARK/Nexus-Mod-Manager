@@ -209,9 +209,7 @@ namespace Nexus.UI.Controls
 				return (p_srcSource == null) ? null : p_srcSource.Path;
 			}
 		}
-
-		private static Dictionary<string, Archive> m_dicArchiveCache = new Dictionary<string, Archive>(StringComparer.InvariantCultureIgnoreCase);
-
+		
 		private SourceSet m_sstSources = new SourceSet();
 		private bool? m_booIsAchive = null;
 		private bool? m_booIsDirectory = null;
@@ -259,18 +257,6 @@ namespace Nexus.UI.Controls
 
 				if (m_sstSources.Count == 0)
 					m_booIsDirectory = true;
-				else if (Archive.IsArchivePath(LastSource.Path))
-				{
-					KeyValuePair<string, string> kvpArchive = Archive.ParseArchivePath(LastSource);
-					Archive arcArchive = null;
-					lock (m_dicArchiveCache)
-					{
-						if (!m_dicArchiveCache.ContainsKey(kvpArchive.Key))
-							m_dicArchiveCache[kvpArchive.Key] = new Archive(kvpArchive.Key);
-						arcArchive = m_dicArchiveCache[kvpArchive.Key];
-					}
-					m_booIsDirectory = arcArchive.IsDirectory(kvpArchive.Value);
-				}
 				else
 					m_booIsDirectory = Directory.Exists(LastSource);
 				return m_booIsDirectory.Value;
@@ -302,10 +288,6 @@ namespace Nexus.UI.Controls
 
 				if (m_sstSources.Count == 0)
 					m_booIsAchive = false;
-				else
-				{
-					m_booIsAchive = Archive.IsArchive(LastSource);
-				}
 				return m_booIsAchive.Value;
 			}
 		}

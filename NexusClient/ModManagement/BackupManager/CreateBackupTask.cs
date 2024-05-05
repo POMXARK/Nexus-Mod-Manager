@@ -9,7 +9,6 @@ using Nexus.Client.PluginManagement;
 using Nexus.Client.Util;
 using Nexus.Client.UI;
 using Nexus.Client.Util.Collections;
-using SevenZip;
 
 namespace Nexus.Client.ModManagement
 {
@@ -368,16 +367,6 @@ namespace Nexus.Client.ModManagement
 				strDateTimeStamp = strDateTimeStamp.Replace("-", "");
 				strDateTimeStamp = strDateTimeStamp.Replace("T", "-");
 
-				SevenZipCompressor szcCompressor = new SevenZipCompressor(startPath);
-				szcCompressor.CompressionLevel = SevenZip.CompressionLevel.Normal;
-				szcCompressor.ArchiveFormat = OutArchiveFormat.Zip;
-				szcCompressor.FastCompression = false;
-				szcCompressor.CompressionMethod = CompressionMethod.Default;
-				szcCompressor.CompressionMode = SevenZip.CompressionMode.Create;
-				szcCompressor.FileCompressionStarted += new EventHandler<FileNameEventArgs>(compressor_FileCompressionStarted);
-
-				szcCompressor.CompressDirectory(startPath, Path.Combine(SelectedPath, ModManager.GameMode.ModeId + "_NMM_BACKUP_" + strDateTimeStamp + ".zip"));
-
 				OverallMessage = "Deleting the leftovers.";
 				StepOverallProgress();
 				FileUtil.ForceDelete(BackupDirectory);
@@ -469,14 +458,6 @@ namespace Nexus.Client.ModManagement
 				lock (m_objLock)
 					DirectoryCopy(strLogPath, Path.Combine(p_strBackupDirectory, mprModProfile.Id, "Scripted"), true);
 			return mprModProfile;
-		}
-
-		void compressor_FileCompressionStarted(object sender, FileNameEventArgs e)
-		{
-			double PercentDone = ((double)FileCounter / TotalFiles) * 100;
-			OverallMessage = OverallMessage = "Zipping the Archive..." + PercentDone.ToString("0") + "%";
-			FileCounter++;
-			StepOverallProgress();
 		}
 		
 		static bool FileEquals(string path1, string path2)

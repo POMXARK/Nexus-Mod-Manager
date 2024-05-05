@@ -8,7 +8,6 @@ using System.Xml.Linq;
 using Nexus.Client.BackgroundTasks;
 using Nexus.Client.UI;
 using Nexus.Client.Util;
-using SevenZip;
 
 
 namespace Nexus.Client.ModManagement
@@ -128,183 +127,7 @@ namespace Nexus.Client.ModManagement
 
 			OverallMessage = "Checking the backup archive...";
 			StepOverallProgress();
-
-			using (SevenZipExtractor szeExtractor = new SevenZipExtractor(bkpArchive))
-			{
-				ReadOnlyCollection<string> lstArchiveFiles = szeExtractor.ArchiveFileNames;
-
-				if ((!lstArchiveFiles.Contains(Path.GetFileName(ModManager.GameMode.PluginDirectory), StringComparer.OrdinalIgnoreCase)) || (!lstArchiveFiles.Contains("VIRTUAL INSTALL", StringComparer.OrdinalIgnoreCase)))
-				{
-					string strMessage = string.Format("The Backup file {0} is wrong.", bkpArchive);
-					DialogResult drFormClose = MessageBox.Show(strMessage, "NMM Backup", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-					return null;
-				}
-
-				ItemMessage = "Extracting the backup archive...";
-				ItemProgress = 0;
-				ItemProgressMaximum = szeExtractor.ArchiveFileNames.Count;
-				BackupDirectory = Path.Combine(EnvironmentInfo.TemporaryPath, "NMMBACKUP");
-
-				if (Directory.Exists(BackupDirectory))
-					FileUtil.ForceDelete(BackupDirectory);
-
-				Directory.CreateDirectory(BackupDirectory);
-
-				szeExtractor.FileExtractionStarted += new EventHandler<FileInfoEventArgs>(Extractor_FileExtractionStarted);
-				szeExtractor.FileExtractionFinished += new EventHandler<FileInfoEventArgs>(Extractor_FileExtractionFinished);
-				szeExtractor.Extracting += new EventHandler<ProgressEventArgs>(Extractor_Extracting);
-				try
-				{
-					szeExtractor.ExtractArchive(BackupDirectory);
-				}
-				catch (ExtractionFailedException ex)
-				{
-					Status = TaskStatus.Error;
-					return ex.Message;
-				}
-				catch (FileNotFoundException ex)
-				{
-					Status = TaskStatus.Error;
-					return ex.Message;
-				}
-				if (File.Exists(Path.Combine(BackupDirectory, "InstallLog.xml")))
-					installLog = Path.Combine(BackupDirectory, "InstallLog.xml");
-												
-				OverallMessage = "Creating the " + Path.GetFileName(ModManager.GameMode.PluginDirectory) + " Files list.";
-				StepOverallProgress();
-				string[] DATAfiles = Directory.GetFiles(Path.Combine(BackupDirectory, Path.GetFileName(ModManager.GameMode.PluginDirectory)), "*.*", SearchOption.AllDirectories);
-				FileInfo fInfo = null;
-
-				OverallProgressMaximum = DATAfiles.Count();
-				ItemProgress = 0;
-				foreach (string file in DATAfiles)
-				{
-					string[] result = file.Split(new string[] { Path.Combine(BackupDirectory, Path.GetFileName(ModManager.GameMode.PluginDirectory)) + Path.DirectorySeparatorChar }, StringSplitOptions.None);
-					fInfo = new FileInfo(file);
-					lstLooseFiles.Add(new BackupInfo(result[1], file, "", Path.GetFileName(ModManager.GameMode.PluginDirectory), fInfo.Length));
-
-					if (ItemProgress < OverallProgressMaximum)
-					{
-						ItemMessage = file;
-						StepItemProgress();
-					}
-				}
-
-				OverallMessage = "Creating the VIRTUAL INSTALL Files list.";
-				StepOverallProgress();
-				string[] VIRTUALINSTALLfiles = Directory.GetFiles(Path.Combine(BackupDirectory, "VIRTUAL INSTALL"), "*.*", SearchOption.AllDirectories);
-				fInfo = null;
-
-				OverallProgressMaximum = VIRTUALINSTALLfiles.Count();
-				ItemProgress = 0;
-				foreach (string file in VIRTUALINSTALLfiles)
-				{
-					string[] result = file.Split(new string[] { "VIRTUAL INSTALL" + Path.DirectorySeparatorChar }, StringSplitOptions.None);
-					fInfo = new FileInfo(file);
-					lstInstalledModFiles.Add(new BackupInfo(result[1], file, "", "VIRTUAL INSTALL", fInfo.Length));
-
-					if (ItemProgress < OverallProgressMaximum)
-					{
-						ItemMessage = file;
-						StepItemProgress();
-					}
-				}
-
-				OverallMessage = "Creating the NMMLINK Files list.";
-				StepOverallProgress();
-				
-				if (Directory.Exists(Path.Combine(BackupDirectory, "NMMLINK")))
-				{
-					string[] NMMLINKFiles = Directory.GetFiles(Path.Combine(BackupDirectory, "NMMLINK"), "*.*", SearchOption.AllDirectories);
-					fInfo = null;
-
-					foreach (string file in NMMLINKFiles)
-					{
-						string[] result = file.Split(new string[] { "NMMLINK" + Path.DirectorySeparatorChar }, StringSplitOptions.None);
-						fInfo = new FileInfo(file);
-
-						if (ModManager.VirtualModActivator.MultiHDMode)
-							lstInstalledNMMLINKFiles.Add(new BackupInfo(result[1], file, "", "NMMLINK", fInfo.Length));
-						else
-							lstInstalledNMMLINKFiles.Add(new BackupInfo(result[1], file, "", "VIRTUAL INSTALL", fInfo.Length));
-
-						if (ItemProgress < OverallProgressMaximum)
-						{
-							ItemMessage = file;
-							StepItemProgress();
-						}
-					}
-				}
-
-				OverallMessage = "Creating the MOD ARCHIVES list.";
-				StepOverallProgress();
-				if (Directory.Exists(Path.Combine(BackupDirectory, "MODS")))
-				{
-					string[] ModArchives = Directory.GetFiles(Path.Combine(BackupDirectory, "MODS"), "*.*", SearchOption.AllDirectories);
-					fInfo = null;
-
-					OverallProgressMaximum = ModArchives.Count();
-					ItemProgress = 0;
-					foreach (string file in ModArchives)
-					{
-						string[] result = file.Split(new string[] { "MODS" + Path.DirectorySeparatorChar }, StringSplitOptions.None);
-						fInfo = new FileInfo(file);
-						lstModArchives.Add(new BackupInfo(result[1], file, "", "MODS", fInfo.Length));
-
-						if (ItemProgress < OverallProgressMaximum)
-						{
-							ItemMessage = file;
-							StepItemProgress();
-						}
-					}
-				}
-
-				OverallMessage = "Creating the CACHE.";
-				StepOverallProgress();
-				if (Directory.Exists(Path.Combine(BackupDirectory, "cache")))
-				{
-					string[] ModCacheArchives = Directory.GetFiles(Path.Combine(BackupDirectory, "cache"), "*.*", SearchOption.AllDirectories);
-					fInfo = null;
-
-					OverallProgressMaximum = ModCacheArchives.Count();
-					ItemProgress = 0;
-					foreach (string file in ModCacheArchives)
-					{
-						string[] result = file.Split(new string[] { "cache" + Path.DirectorySeparatorChar }, StringSplitOptions.None);
-						fInfo = new FileInfo(file);
-						lstModCacheArchives.Add(new BackupInfo(result[1], file, "", "cache", fInfo.Length));
-
-						if (ItemProgress < OverallProgressMaximum)
-						{
-							ItemMessage = file;
-							StepItemProgress();
-						}
-					}
-				}
-
-				OverallMessage = "Creating the PROFILE Files list.";
-				StepOverallProgress();
-				string[] Profilefiles = Directory.GetFiles(Path.Combine(BackupDirectory, "PROFILE"), "*.*", SearchOption.AllDirectories);
-				fInfo = null;
-				
-				OverallProgressMaximum = Profilefiles.Count();
-				ItemProgress = 0;
-				foreach (string file in Profilefiles)
-				{
-					string[] result = file.Split(new string[] { "PROFILE" + Path.DirectorySeparatorChar }, StringSplitOptions.None);
-					fInfo = new FileInfo(file);
-					lstProfileFiles.Add(new BackupInfo(result[1], file, "", "PROFILE", fInfo.Length));
-
-					if (ItemProgress < OverallProgressMaximum)
-					{
-						ItemMessage = file;
-						StepItemProgress();
-					}
-				}
-
-				mprModProfile = RestoreBackupFiles(lstLooseFiles, lstInstalledModFiles, lstInstalledNMMLINKFiles, lstProfileFiles, lstModArchives, lstModCacheArchives, BackupDirectory, installLog);
-			}
-
+			
 			StepOverallProgress();
 				
 			return mprModProfile;
@@ -656,22 +479,6 @@ namespace Nexus.Client.ModManagement
 			ProfileManager.SaveConfig();
 			return mprModProfile;
 		}
-	
-		/// <summary>
-		/// Handles the <see cref="SevenZipExtractor.FileExtractionFinished"/> event of
-		/// the archive extractors.
-		/// </summary>
-		/// <remarks>
-		/// This cancels the extraction if the user has cancelled the task. This also updates
-		/// the item progress.
-		/// </remarks>
-		/// <param name="sender">The object that raised the event.</param>
-		/// <param name="e">A <see cref="FileInfoEventArgs"/> describing the event arguments.</param>
-		private void Extractor_FileExtractionFinished(object sender, FileInfoEventArgs e)
-		{
-			e.Cancel = Status == TaskStatus.Cancelling;
-			StepItemProgress();
-		}
 
 		private Int32 ImportedProfileModCount(string p_strXMLFilePath)
 		{
@@ -690,26 +497,6 @@ namespace Nexus.Client.ModManagement
 			}
 
 			return intModCount;
-		}
-
-		/// <summary>
-		/// Handles the <see cref="SevenZipExtractor.FileExtractionStarted"/> event of
-		/// the archive extractors.
-		/// </summary>
-		/// <remarks>
-		/// This cancels the extraction if the user has cancelled the task.
-		/// </remarks>
-		/// <param name="sender">The object that raised the event.</param>
-		/// <param name="e">A <see cref="FileInfoEventArgs"/> describing the event arguments.</param>
-		private void Extractor_FileExtractionStarted(object sender, FileInfoEventArgs e)
-		{
-			e.Cancel = Status == TaskStatus.Cancelling;
-		}
-
-		private void Extractor_Extracting(object sender, ProgressEventArgs e)
-		{
-			ItemMessage = "Extracting Archive..." + e.PercentDone+ "%";
-			StepItemProgress();
 		}
 	}
 }

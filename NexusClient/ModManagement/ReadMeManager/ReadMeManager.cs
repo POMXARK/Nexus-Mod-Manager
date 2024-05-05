@@ -1,18 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-using Nexus.Client.BackgroundTasks;
-using Nexus.Client.ModRepositories;
 using Nexus.Client.Mods;
-using Nexus.Client.UI;
 using Nexus.Client.Util;
-using Nexus.Client.Util.Collections;
-using Nexus.Client.Games;
 using ChinhDo.Transactions;
-using SevenZip;
 
 
 namespace Nexus.Client.ModManagement
@@ -153,8 +146,6 @@ namespace Nexus.Client.ModManagement
 		{
 			try
 			{
-				Archive arcFile = new Archive(p_strArchivePath);
-				List<string> lstFiles = GetFileList(arcFile, true);
 				string strReadMePath = m_strReadMePath;
 				string strFileName = String.Empty;
 				string strReadMeFile = String.Empty;
@@ -163,23 +154,7 @@ namespace Nexus.Client.ModManagement
 				byte[] bteData = null;
 
 				PurgeTempFolder();
-
-				for (int i = 0; i < lstFiles.Count; i++)
-				{
-					strFileName = lstFiles[i].ToString();
-					if (Readme.IsValidReadme(strFileName))
-					{
-						bteData = arcFile.GetFileContents(lstFiles[i]);
-						if (bteData.Length > 0)
-						{
-							strReadMeFile = Path.GetFileName(strFileName);
-							strReadMePath = Path.Combine(ReadMeTempPath, strReadMeFile);
-							p_tfmFileManager.WriteAllBytes(strReadMePath, bteData);
-
-							break;
-						}
-					}
-				}
+				
 				string[] strFilesToCompress = Directory.GetFiles(ReadMeTempPath, "*.*", SearchOption.AllDirectories);
 				if (strFilesToCompress.Length > 0)
 					if (CreateReadMeArchive(strArchiveFile, strFilesToCompress))
@@ -209,11 +184,6 @@ namespace Nexus.Client.ModManagement
 		{
 			try
 			{
-				SevenZipCompressor szcCompressor = new SevenZipCompressor();
-				szcCompressor.ArchiveFormat = OutArchiveFormat.SevenZip;
-				szcCompressor.CompressionLevel = CompressionLevel.Normal;
-				szcCompressor.CompressFiles(Path.Combine(m_strReadMePath, p_strArchiveFile), p_strFilesToCompress);
-
 				foreach (string File in p_strFilesToCompress)
 					FileUtil.ForceDelete(File);
 
@@ -308,31 +278,7 @@ namespace Nexus.Client.ModManagement
 				FileUtil.ForceDelete(strFilePath);
 			m_dicReadMeFiles.Remove(p_strFileName);
 		}
-
-		/// <summary>
-		/// Retrieves the list of all files in the specified folder.
-		/// </summary>
-		/// <param name="p_arcArchive">The archive whose file is to be retrieved.</param>
-		/// <param name="p_booRecurse">Whether to return files that are in subdirectories of the given directory.</param>
-		/// <returns>The list of all files in the specified folder.</returns>
-		private List<string> GetFileList(Archive p_arcArchive, bool p_booRecurse)
-		{
-			List<string> lstFiles = new List<string>();
-			foreach (string strFile in p_arcArchive.GetFiles("", "*.txt|*.doc|*.docx|*.htm|*.html|*.rtf|*.pdf", p_booRecurse))
-				if (!m_dicMovedArchiveFiles.ContainsValue(strFile))
-					if (!strFile.StartsWith("fomod", StringComparison.OrdinalIgnoreCase))
-						lstFiles.Add(strFile);
-			string strPathPrefix = "" ?? "";
-			strPathPrefix = strPathPrefix.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
-			strPathPrefix = strPathPrefix.Trim(Path.DirectorySeparatorChar);
-			if (strPathPrefix.Length > 0)
-				strPathPrefix += Path.DirectorySeparatorChar;
-			foreach (string strFile in m_dicMovedArchiveFiles.Keys)
-				if (strFile.StartsWith(strPathPrefix, StringComparison.OrdinalIgnoreCase) && !strFile.StartsWith("fomod", StringComparison.OrdinalIgnoreCase))
-					lstFiles.Add(strFile);
-			return lstFiles;
-		}
-
+		
 		/// <summary>
 		/// Get the ReadMe file path if it exists.
 		/// </summary>
@@ -348,15 +294,6 @@ namespace Nexus.Client.ModManagement
 				if (File.Exists(strModReadMeFile))
 				{
 					PurgeTempFolder();
-					Archive arcFile = new Archive(strModReadMeFile);
-					byte[] bteData = arcFile.GetFileContents(p_strFileName);
-					if ((bteData != null) && (bteData.Length > 0))
-					{
-						TxFileManager tfmFileManager = new TxFileManager();
-						string strReadMeFile = Path.Combine(ReadMeTempPath, p_strFileName);
-						tfmFileManager.WriteAllBytes(strReadMeFile, bteData);
-						return strReadMeFile;
-					}
 				}
 			}
 

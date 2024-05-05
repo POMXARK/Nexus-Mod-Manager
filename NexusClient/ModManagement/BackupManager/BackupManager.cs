@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.IO;
-using SevenZip;
-using Nexus.Client.Util;
 
 namespace Nexus.Client.ModManagement
 {
@@ -32,8 +30,7 @@ namespace Nexus.Client.ModManagement
 		public string strModArchivesSize = string.Empty;
 
 		public List<int> checkList = null;
-
-		public List<ArchiveFileInfo> GameModeNameCheck = null;
+		
 		public bool booPluginPath = false;
 		public bool booVirtualPath = false;
 		public bool booValidArchive = true;
@@ -156,32 +153,6 @@ namespace Nexus.Client.ModManagement
 		{
 			if (Path.GetExtension(p_strFileName) != ".zip")
 				booValidArchive = false;
-			else
-			{
-
-				using (SevenZipExtractor szeExtractor = new SevenZipExtractor(p_strFileName))
-				{
-					ReadOnlyCollection<ArchiveFileInfo> lstArchiveFiles = szeExtractor.ArchiveFileData;
-                    string gameModeName = PurgeIllegalWindowsCharacters(ModManager.GameMode.Name);
-					GameModeNameCheck = lstArchiveFiles.Where(x => x.FileName.Equals(gameModeName, StringComparison.OrdinalIgnoreCase)).ToList();
-
-					if (GameModeNameCheck.Count() > 0)
-					{
-						string checkPluginPath = Path.GetFileName(ModManager.GameMode.PluginDirectory) + Path.DirectorySeparatorChar;
-						string checkVirtualPath = "VIRTUAL INSTALL" + Path.DirectorySeparatorChar;
-
-						foreach (ArchiveFileInfo ArchiveFile in lstArchiveFiles)
-						{
-							if (ArchiveFile.FileName.StartsWith(checkPluginPath))
-								booPluginPath = true;
-							if (ArchiveFile.FileName.StartsWith(checkVirtualPath))
-								booVirtualPath = true;
-
-							RestoredFiles = RestoredFiles + (ArchiveFile.Size / 1024f) / 1024f;
-						}
-					}
-				}
-			}
 		}
 
 		public void CheckModArchives()
@@ -208,13 +179,6 @@ namespace Nexus.Client.ModManagement
 
 						foreach (string archive in modArchives)
 						{
-							if (Archive.IsArchive(archive))
-							{
-								string[] result = archive.Split(new string[] { ModManager.GameMode.GameModeEnvironmentInfo.ModDirectory + Path.DirectorySeparatorChar }, StringSplitOptions.None);
-								fInfo = new FileInfo(archive);
-								ModArchivesSize = ModArchivesSize + fInfo.Length;
-								lstModArchives.Add(new BackupInfo(result[1], archive, "", Path.GetFileName(ModManager.GameMode.GameModeEnvironmentInfo.ModDirectory), fInfo.Length));
-							}
 						}
 					}
 				}
@@ -226,12 +190,6 @@ namespace Nexus.Client.ModManagement
 				{
 					foreach (string archive in modRootArchives)
 					{
-						if (Archive.IsArchive(archive))
-						{
-							fInfo = new FileInfo(Path.Combine(ModManager.GameMode.GameModeEnvironmentInfo.ModDirectory, archive));
-							ModArchivesSize = ModArchivesSize + fInfo.Length;
-							lstModArchives.Add(new BackupInfo(Path.GetFileName(archive), Path.Combine(ModManager.GameMode.GameModeEnvironmentInfo.ModDirectory, archive), "", Path.GetFileName(ModManager.GameMode.GameModeEnvironmentInfo.ModDirectory), fInfo.Length));
-						}
 					}
 				}
 				if (Directory.Exists(ModManager.GameMode.GameModeEnvironmentInfo.ModCacheDirectory))

@@ -1,7 +1,6 @@
 ﻿namespace Nexus.Client.Settings
 {
-    using Nexus.Client.ModManagement;
-    using SevenZip;
+    using ModManagement;
     using System;
 
 	/// <summary>
@@ -266,25 +265,7 @@
 		/// </summary>
 		/// <value>The application's saved splitter sizes.</value>
 		SplitterSizes SplitterSizes { get; }
-
-		/// <summary>
-		/// Gets or sets the preferred compression level to use for mods.
-		/// </summary>
-		/// <remarks>
-		/// Note that not all mod formats support configurable compression levels.
-		/// </remarks>
-		/// <value>The preferred compression level to use for mods.</value>
-		CompressionLevel ModCompressionLevel { get; set; }
-
-		/// <summary>
-		/// Gets or sets the preferred compression format to use for mods.
-		/// </summary>
-		/// <remarks>
-		/// Note that not all mod formats support configurable compression formats.
-		/// </remarks>
-		/// <value>The preferred compression format to use for mods.</value>
-		OutArchiveFormat ModCompressionFormat { get; set; }
-
+		
 		/// <summary>
 		/// Gets the mods that have been queued to be added to the mod manager for given game modes.
 		/// </summary>

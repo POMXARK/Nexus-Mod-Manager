@@ -95,7 +95,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="OMod.DecoderProgressWatcher.cs" />
     <Compile Include="OMod.FileInfo.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -112,17 +112,6 @@ namespace Nexus.Client.Mods.Formats.FOMod
 				if (fileList.Count() > 0)
 					return FormatConfidence.Match;
 			}
-			else
-			{
-				if (String.IsNullOrEmpty(p_strPath) || !File.Exists(p_strPath) || !Archive.IsArchive(p_strPath))
-					return FormatConfidence.Incompatible;
-
-				using (Archive arcMod = new Archive(p_strPath))
-				{
-					if (arcMod.GetFiles("fomod", true).Length > 0)
-						return FormatConfidence.Match;
-				}
-			}
 
 			return FormatConfidence.Compatible;
 		}
