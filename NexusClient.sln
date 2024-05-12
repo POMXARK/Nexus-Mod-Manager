@@ -4,8 +4,14 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.3.32922.545
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Game Modes", "Game Modes", "{512B02AB-C927-4F3F-A7BF-26E6EE4CF678}"
+	ProjectSection(SolutionItems) = preProject
+		Game Modes\.gitignore = Game Modes\.gitignore
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Script Types", "Script Types", "{A8150A1D-749D-4346-B8F7-616644392CD9}"
+	ProjectSection(SolutionItems) = preProject
+		Script Types\.gitignore = Script Types\.gitignore
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Mod Formats", "Mod Formats", "{A2AB109D-6B22-4A49-AA0F-FD881045D16C}"
 EndProject
@@ -247,6 +253,7 @@ Global
 		{A11C9C68-3133-48BF-BB4D-C0DB2AC1D201}.Release|Any CPU.Build.0 = Release|Any CPU
 		{0DED892D-18B4-42EE-A6B4-6574BA85B7B6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{0DED892D-18B4-42EE-A6B4-6574BA85B7B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0DED892D-18B4-42EE-A6B4-6574BA85B7B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8CBF8618-0224-44EA-A3B2-D20C53EA29B6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{8CBF8618-0224-44EA-A3B2-D20C53EA29B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8CBF8618-0224-44EA-A3B2-D20C53EA29B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -293,6 +300,7 @@ Global
 		{C75532C4-765B-418E-B09B-46D36B2ABDB1}.Release|Any CPU.Build.0 = Release|Any CPU
 		{60F8B554-5C53-4DE2-B868-A0BFEF4EF80E}.Debug|Any CPU.ActiveCfg = Release|Any CPU
 		{60F8B554-5C53-4DE2-B868-A0BFEF4EF80E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{60F8B554-5C53-4DE2-B868-A0BFEF4EF80E}.Debug|Any CPU.Build.0 = Release|Any CPU
 		{998641A2-9362-4A17-8BA9-E9B5D9FF4BCA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{998641A2-9362-4A17-8BA9-E9B5D9FF4BCA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{998641A2-9362-4A17-8BA9-E9B5D9FF4BCA}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -475,6 +483,10 @@ Global
 		{4C1004DA-9145-4F96-A6D9-0B1BAB3AF33A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4C1004DA-9145-4F96-A6D9-0B1BAB3AF33A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4C1004DA-9145-4F96-A6D9-0B1BAB3AF33A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{26F860F0-050C-4CBC-B8DF-D879327DFA67}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{26F860F0-050C-4CBC-B8DF-D879327DFA67}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{26F860F0-050C-4CBC-B8DF-D879327DFA67}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{26F860F0-050C-4CBC-B8DF-D879327DFA67}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -544,6 +556,7 @@ Global
 		{E38AC356-D5BF-4A1F-98D7-56E8B7041E0C} = {512B02AB-C927-4F3F-A7BF-26E6EE4CF678}
 		{6067A818-48D8-4C93-A0AA-E70F8EC04E63} = {512B02AB-C927-4F3F-A7BF-26E6EE4CF678}
 		{4C1004DA-9145-4F96-A6D9-0B1BAB3AF33A} = {512B02AB-C927-4F3F-A7BF-26E6EE4CF678}
+		{26F860F0-050C-4CBC-B8DF-D879327DFA67} = {325AAE29-5A23-4CF9-B0B2-F9316DD46606}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {5F86C40E-2D9A-4720-8C7D-E3252AA108CB}

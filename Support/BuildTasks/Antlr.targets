@@ -8,7 +8,7 @@
 	</ItemGroup>
 	<PropertyGroup>
 		<AntlrJarPath>$(SolutionDir)lib\antlr-3.3-complete.jar</AntlrJarPath>
-		<JavaPath>C:\Program Files (x86)\Java\jre6\bin\java.exe</JavaPath>
+		<JavaPath>\usr\bin\java</JavaPath>
 	</PropertyGroup>
 
 	<!-- import the task assembly -->

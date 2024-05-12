@@ -415,9 +415,13 @@ namespace Nexus.Client.Games.Settings
 		/// </summary>
 		public void LoadSettings()
 		{
+#if OS_WINDOWS // fix_6
 			string strRegMod = (string)Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\NexusModManager\" + GameModeDescriptor.ModeId + " ", "Mods", null);
 			string strRegInst = (string)Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\NexusModManager\" + GameModeDescriptor.ModeId + " ", "InstallInfo", null);
-
+#else
+			string strRegMod = null;	
+			string strRegInst = null;	
+#endif
 			if (!String.IsNullOrWhiteSpace(strRegMod))
 				if (Path.IsPathRooted(strRegMod) && !Directory.Exists(Path.GetPathRoot(strRegMod)))
 					strRegMod = null;

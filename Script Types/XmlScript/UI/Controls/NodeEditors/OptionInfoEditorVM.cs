@@ -108,15 +108,7 @@ namespace Nexus.Client.ModManagement.Scripting.XmlScript.UI.Controls.NodeEditors
 			byte[] bteImage = null;
 			if (vfiItem != null)
 			{
-				if (Archive.IsArchivePath(vfiItem.Source))
-				{
-					KeyValuePair<string, string> kvpArchive = Archive.ParseArchivePath(vfiItem.Source);
-					using (Archive arcMod = new Archive(kvpArchive.Key))
-					{
-						bteImage = arcMod.GetFileContents(kvpArchive.Value);
-					}
-				}
-				else if (File.Exists(vfiItem.Source))
+				if (File.Exists(vfiItem.Source))
 				{
 					bteImage = File.ReadAllBytes(vfiItem.Source);
 				}

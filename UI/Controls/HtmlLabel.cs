@@ -40,9 +40,11 @@ namespace Nexus.UI.Controls
             }
             set {
                 m_strText = value;
+#if OS_WINDOWS // fix_11
                 if (!string.IsNullOrEmpty (m_strText)) {
                     m_browser.Navigate (NAVIGATION_PAGE);
                 }
+#endif
             }
         }
 

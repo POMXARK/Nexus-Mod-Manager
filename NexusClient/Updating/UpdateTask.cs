@@ -127,8 +127,10 @@ namespace Nexus.Client.Updating
 				ItemProgressMaximum = updUpdater.ProgressMaximum;
 				updUpdater.PropertyChanged += new PropertyChangedEventHandler(Updater_PropertyChanged);
 				updUpdater.Confirm = camConfirm;
+#if OS_WINDOWS	// fix_15			
 				if (!updUpdater.Update())
 					m_lstFailedUpdaters.Add(updUpdater);
+#endif
 				StepOverallProgress();
 				updUpdater.PropertyChanged -= new PropertyChangedEventHandler(Updater_PropertyChanged);
 			}

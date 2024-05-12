@@ -37,9 +37,12 @@ namespace Nexus.Client.Games.SkyrimSE
 			Image imgIcon = null;
 
 			ClearLaunchCommands();
-
+#if OS_WINDOWS // fix 9
 			string strCommand = GetBOSSLaunchCommand();
 			Trace.TraceInformation("BOSS Command: {0} (IsNull={1})", strCommand, (strCommand == null));
+#else
+			string strCommand = null;
+#endif
 			if ((strCommand != null) && (File.Exists(strCommand)))
 			{
 				imgIcon = File.Exists(strCommand) ? Icon.ExtractAssociatedIcon(strCommand).ToBitmap() : null;
@@ -50,9 +53,12 @@ namespace Nexus.Client.Games.SkyrimSE
 				imgIcon = null;
 				AddLaunchCommand(new Command("Config#BOSS", "Config BOSS", "Configures BOSS.", imgIcon, ConfigBOSS, true));
 			}
-
+#if OS_WINDOWS // fix 9
 			strCommand = GetLOOTLaunchCommand();
 			Trace.TraceInformation("LOOT Command: {0} (IsNull={1})", strCommand, (strCommand == null));
+#else
+			 strCommand = null;
+#endif
 			if ((strCommand != null) && (File.Exists(strCommand)))
 			{
 				imgIcon = File.Exists(strCommand) ? Icon.ExtractAssociatedIcon(strCommand).ToBitmap() : null;

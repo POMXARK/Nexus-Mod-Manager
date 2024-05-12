@@ -591,7 +591,12 @@ namespace Nexus.Client.Games.Settings
 					EnvironmentInfo.Settings.ModFolder.TryGetValue(GameModeDescriptor.ModeId, out strDirectory);
 				if (String.IsNullOrEmpty(strDirectory))
 				{
-					string strDefault = Path.Combine(Path.GetPathRoot(strInstallationPath), "Games", CommonData.ModManagerName, GameModeDescriptor.ModeId, "Mods");
+#if OS_WINDOWS // fix_3
+					string strDefault = Path.Combine(Path.GetPathRoot(strInstallationPath), "Games", CommonData.ModManagerName, GameModeDescriptor.ModeId, "Mods");	
+#else
+					string home = Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile);
+					string strDefault = Path.Combine(home, "Games", CommonData.ModManagerName, GameModeDescriptor.ModeId, "Mods");
+#endif
 					strDirectory = strDefault;
 				}
 				ModDirectory = strDirectory;
@@ -629,7 +634,12 @@ namespace Nexus.Client.Games.Settings
 					EnvironmentInfo.Settings.InstallInfoFolder.TryGetValue(GameModeDescriptor.ModeId, out strDirectory);
 				if (String.IsNullOrEmpty(strDirectory))
 				{
-					string strDefault = Path.Combine(Path.GetPathRoot(strInstallationPath), "Games", CommonData.ModManagerName, GameModeDescriptor.ModeId, "Install Info");
+#if OS_WINDOWS // fix_3
+					string strDefault = Path.Combine(Path.GetPathRoot(strInstallationPath), "Games", CommonData.ModManagerName, GameModeDescriptor.ModeId, "Install Info");	
+#else
+					string home = Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile);
+					string strDefault = Path.Combine(home, "Games", CommonData.ModManagerName, GameModeDescriptor.ModeId, "Install Info");
+#endif
 					strDirectory = strDefault;
 				}
 				InstallInfoDirectory = strDirectory;
@@ -690,7 +700,15 @@ namespace Nexus.Client.Games.Settings
 					string strDefault = String.Empty;
 					strDefault = ModDirectory;
 					if (!MultiHDInstall && (!CheckOnGameHD(strDefault)))
+#if  OS_WINDOWS // fix_3
 						strDefault = Path.Combine(((m_booRequiredTool ? Path.GetPathRoot(ToolDirectory) : Path.GetPathRoot(GameModeDescriptor.InstallationPath)) ?? Path.GetPathRoot(Application.ExecutablePath)), "Games", CommonData.ModManagerName, GameModeDescriptor.ModeId);
+#else
+					{
+						string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+						strDefault = Path.Combine(home, "Games", CommonData.ModManagerName, GameModeDescriptor.ModeId, "Virtual");
+
+					}
+#endif
 
 					strDirectory = strDefault;
 				}

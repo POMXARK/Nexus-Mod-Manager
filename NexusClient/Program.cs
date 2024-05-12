@@ -356,7 +356,11 @@
 			catch
 			{
 				//backup, in case on extended message box starts to act up
+#if !OS_WINDOWS // fix_14
+				MessageBox.Show(stbPromptMessage.ToString(), "Error");
+#else
 				MessageBox.Show(stbPromptMessage.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+#endif
 			}
 		}
 	}

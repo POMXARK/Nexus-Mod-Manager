@@ -206,7 +206,7 @@
 
 			try
 			{
-				InitializeDocuments();
+				InitializeDocuments(); // fix it
 			}
 			catch
 			{
@@ -397,8 +397,7 @@
                 {
                     _pluginManagerControl.Show(dockPanel1);
                 }
-
-                _modManagerControl.Show(dockPanel1);
+                 // _modManagerControl.Show(dockPanel1); // fix it
 			}
 
 			var strTab = dockPanel1.ActiveDocument.DockHandler.TabText;
@@ -1498,8 +1497,9 @@
 				Invoke((Action<object, EventArgs<IBackgroundTask>>)ViewModel_Updating, sender, e);
 				return;
 			}
-
+#if OS_WINDOWS // fix_13
 			ProgressDialog.ShowDialog(this, e.Argument);
+#endif
 		}
 
 		/// <summary>

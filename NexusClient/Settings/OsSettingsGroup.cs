@@ -253,7 +253,9 @@
 				}
 
 				string fileId = extension.TrimStart('.').ToUpperInvariant() + "_File_Type";
-
+#if !OS_WINDOWS // fix 8
+				return false;
+#endif
 				string key = Registry.GetValue(@"HKEY_CLASSES_ROOT\" + extension, null, null) as string;
 
 				return fileId.Equals(key);

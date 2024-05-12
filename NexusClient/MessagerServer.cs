@@ -38,7 +38,11 @@ namespace Nexus.Client
 
 			string strUri = String.Format("{0}-{1}IpcServer", CommonData.ModManagerName, p_gmdGameModeInfo.ModeId);
 			m_schMessagerChannel = new IpcServerChannel(strUri);
+#if OS_WINDOWS // fix 10
 			ChannelServices.RegisterChannel(m_schMessagerChannel, true);
+#else
+			ChannelServices.RegisterChannel(m_schMessagerChannel);
+#endif
 			MessagerServer msgMessager = new MessagerServer(p_mmgModManager, p_frmMainForm);
 			string strEndpoint = String.Format("{0}Listener", p_gmdGameModeInfo.ModeId);
 			RemotingServices.Marshal(msgMessager, strEndpoint, typeof(IMessager));

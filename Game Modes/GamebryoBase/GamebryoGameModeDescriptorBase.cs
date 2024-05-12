@@ -58,14 +58,12 @@
 			    if (!string.IsNullOrEmpty(InstallationPath))
 				{
 					path = Path.Combine(InstallationPath, "Data");
-
-					var pathRoot = Path.GetPathRoot(path);
-
+#if OS_WINDOWS // fix_4
 					if (DriveInfo.GetDrives().Where(x => x.Name.Equals(pathRoot, StringComparison.CurrentCultureIgnoreCase)).ToList().Count <= 0)
                     {
                         throw new DirectoryNotFoundException("The selected drive is no longer present on the system.");
                     }
-
+#endif
                     if (!Directory.Exists(path))
                     {
                         Directory.CreateDirectory(path);
