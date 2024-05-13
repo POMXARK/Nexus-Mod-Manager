@@ -873,10 +873,6 @@
       <Name>Commanding</Name>
       <Private>False</Private>
     </ProjectReference>
-    <ProjectReference Include="..\Game Modes\SkyrimGOG\SkyrimGOG.csproj">
-      <Project>{AC26DA17-3D3F-4F82-90C3-2D1E177F9994}</Project>
-      <Name>SkyrimGOG</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Mod Formats\FOMod\FOMod.csproj">
       <Project>{34B04F6B-0D64-455F-B20F-1C3E080AE601}</Project>
       <Name>FOMod</Name>
